@@ -29,21 +29,3 @@ void loop()
   }
   //Serial.println("");
 }
-
-/*
-void loop()
-{ 
-  for(int z = 0; z < 64; z++) {
-    val[z] = 0;
-    for(int k = 0; k < 8; k++) {
-      val[z] = val[z] | (digitalRead(inPin) << k);
-    }
-  }
-  for(int z = 0; z < 64; z++) {
-    Serial.print(val[z]);
-    Serial.print(" ");
-  }
-  Serial.println("");
-}
-
-*/
