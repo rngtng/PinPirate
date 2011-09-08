@@ -38,13 +38,14 @@ byte read_pointer = 0;
 volatile byte old_clock = 0;
 volatile byte new_clock = 0;
 
-void measure()
-{
+void measure() {
   new_clock = CLKPIN;
 
   if(old_clock == 0 && new_clock == 1) { //raising clock
     logicdata[write_pointer] = CHANPIN;
     write_pointer++;
+
+    //pointer overflow, reset (guess it's faster than modulo)
     if(write_pointer == BUFFER_SIZE) {
       write_pointer = 0;
     }
@@ -52,8 +53,7 @@ void measure()
   old_clock = new_clock;
 }
 
-void setup()
-{
+void setup() {
   Serial.begin(BAUD_RATE);
 
   //init pins as INPUT
@@ -68,10 +68,12 @@ void setup()
 
 
 
-void loop()
-{
+void loop() {
   if(write_pointer != read_pointer) {
     Serial.print(logicdata[read_pointer], BYTE);
+    read_pointer++;
+
+    //pointer overflow, reset (guess it's faster than modulo)
     if(read_pointer == BUFFER_SIZE) {
       read_pointer = 0;
     }
