@@ -11,23 +11,7 @@ volatile byte readBuffer[READ_BUFFER_SIZE];
 volatile byte writePointer = 0;
 byte readPointer = 0;
 
-void measure(int numBytes) {
-  readBuffer[writePointer] = 127;
-  writePointer++;
-  if(writePointer == READ_BUFFER_SIZE) {
-    writePointer = 0;
-  }
-  readBuffer[writePointer] = 0;
-  writePointer++;
-  if(writePointer == READ_BUFFER_SIZE) {
-    writePointer = 0;
-  }  
-  readBuffer[writePointer] = numBytes;
-  writePointer++;
-  if(writePointer == READ_BUFFER_SIZE) {
-    writePointer = 0;
-  }
-  
+void measure(int numBytes) {  
   for(int m = numBytes; m > 0; m--) {
     readBuffer[writePointer] = Wire.receive();
     writePointer++;
@@ -37,20 +21,27 @@ void measure(int numBytes) {
     }
   }
   
+  
+      readBuffer[writePointer] = 111;
+    writePointer++;
+    //pointer overflow, reset (guess it's faster than modulo)
+    if(writePointer == READ_BUFFER_SIZE) {
+      writePointer = 0;
+    }
 }
 
 int k = 0;
 
 void setup() {
   Serial.begin(BAUD_RATE);
-  Wire.begin();
+  Wire.begin(80);
   Wire.onReceive(measure);
 }
 
 void loop() {
 
   if(writePointer != readPointer) {
-    Serial.print(readBuffer[readPointer], BYTE);
+    Serial.print(readBuffer[readPointer]);
     readPointer++;
 
     //pointer overflow, reset (guess it's faster than modulo)
@@ -58,12 +49,7 @@ void loop() {
       readPointer = 0;
     }
   }
-  if(k> 1000) {
-    k = 0;
-    Serial.println("j");
-  }
   delay(1);
-  k++;
 }
 
 
