@@ -15,42 +15,54 @@
 #define CHAN7 29
 #else
 //PIND: 2-7, PINB: 8-13 - non of them are 8bit, so we have to read both and merge
-#define CHANPIN (PIND >> 2) | (PINB << 6)//pins 2 - 9
+#define READ_CHAN1  (PIND >> 2) & 0x0F //pins 2 - 5
+#define READ_CHAN2 PINB & 0x0F //pins 8 - 11
 #define CHAN0 2
 #define CHAN1 3
 #define CHAN2 4
 #define CHAN3 5
-#define CHAN4 6
-#define CHAN5 7
-#define CHAN6 8
-#define CHAN7 9
+#define CHAN4 8
+#define CHAN5 9
+#define CHAN6 10
+#define CHAN7 11
+#define CLK 7
+#define READ_CLK (PIND >> 4) & 0x01
 #endif
 
-#define CLK 13
-#define CLKPIN (PINB >> 5) & 0x01
 
-#define BUFFER_SIZE 128
+#define READ_BUFFER_SIZE 128
 
-volatile byte logicdata[BUFFER_SIZE];
-volatile byte write_pointer = 0;
-byte read_pointer = 0;
+volatile byte readBuffer[READ_BUFFER_SIZE];
+volatile byte writePointer = 0;
+byte readPointer = 0;
 
-volatile byte old_clock = 0;
-volatile byte new_clock = 0;
+volatile byte commandBuffer[READ_BUFFER_SIZE];
+
+volatile byte prevClock = 0;
+volatile byte clock = 0;
+
+int k;
+volatile int l;
 
 void measure() {
-  new_clock = CLKPIN;
+  clock = READ_CLK;
 
-  if(old_clock == 0 && new_clock == 1) { //raising clock
-    logicdata[write_pointer] = CHANPIN;
-    write_pointer++;
-
+  if(prevClock == 0 && clock == 1) { //raising clock
+    readBuffer[writePointer] = READ_CHAN1;
+    writePointer++;
     //pointer overflow, reset (guess it's faster than modulo)
-    if(write_pointer == BUFFER_SIZE) {
-      write_pointer = 0;
+    if(writePointer == READ_BUFFER_SIZE) {
+      writePointer = 0;
+    }
+
+    readBuffer[writePointer] = READ_CHAN2;
+    writePointer++;
+    //pointer overflow, reset (guess it's faster than modulo)
+    if(writePointer == READ_BUFFER_SIZE) {
+      writePointer = 0;
     }
   }
-  old_clock = new_clock;
+  prevClock = clock;
 }
 
 void setup() {
@@ -62,20 +74,20 @@ void setup() {
   }
 
   //prepate Timer
-  Timer1.initialize(500); // 0.02us period = 50kHz
+  Timer1.initialize(20); // 0.02us period = 50kHz
   Timer1.attachInterrupt(measure);
 }
 
-
-
 void loop() {
-  if(write_pointer != read_pointer) {
-    Serial.print(logicdata[read_pointer], BYTE);
-    read_pointer++;
+
+  if(writePointer != readPointer) {
+    Serial.print(readBuffer[readPointer], BYTE);
+    readPointer++;
 
     //pointer overflow, reset (guess it's faster than modulo)
-    if(read_pointer == BUFFER_SIZE) {
-      read_pointer = 0;
+    if(readPointer == READ_BUFFER_SIZE) {
+      readPointer = 0;
     }
   }
+  delay(1);
 }
