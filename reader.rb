@@ -1,22 +1,17 @@
 # taken from:  http://www.arduino.cc/playground/Interfacing/Ruby
 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0 
-# 1 1 15 0 0 0 16 1 2 6 0 1 1 1 15 0 0
+# init_rfid: 0 16     # Turn ON electromagnetic field
+# initiate_rfid: 1 2 6 0
+# read_frame_rfid: 1
+#
+# completion_rfid: 1 1 15
+# close: 0 0  # Turn OFF electromagnetic field
+#
+# completion_rfid: 1 1 15
+# close: 0 0 # Turn OFF electromagnetic field
+#
+
+# slot_marker_rfid: 3
 
 require "serialport"
 
@@ -27,12 +22,20 @@ BAUD_RATE = 115200
 
 sp = SerialPort.new(PORT, BAUD_RATE)
 
-
+cmd = {
+  119 => "slot_marker_rfid",
+  120 => "select_tag_rfid",
+  121 => "\ninit",
+  122 => "initiate",
+  123 => "completion_rfid",
+  124 => "read",
+  125 => "close\n",
+}
 #just read forever
 while true do
   v = sp.getc.unpack("C*").first
-  if v == 111
-    puts
+  if val = cmd[v.to_i]
+    puts val
   else
     print "#{v} "
   end
