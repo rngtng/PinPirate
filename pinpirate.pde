@@ -13,7 +13,7 @@
 #define CMD_CLOSE 125
 
 
-volatile byte sendBuffer[READ_BUFFER_SIZE];
+uint8_t sendBuffer[READ_BUFFER_SIZE];
 volatile byte sendPointer = 0;
 
 volatile byte serialBuffer[READ_BUFFER_SIZE];
@@ -30,8 +30,7 @@ void measure(int numBytes) {
   for(int m = 0; m < numBytes; m++) {
     cmdBuffer[m] = Wire.receive();
   }
-  consume(117, 0); 
-  //detect(numBytes);
+  detect(numBytes);
 }
 
 void sendit() {
@@ -76,24 +75,25 @@ void detect(int length) {
 
   if( length == 1 && cmdBuffer[0] == 3 ) {
     sendBuffer[0] = 18;
-    sendBuffer[1] = 0;
-    sendBuffer[2] = 1;
+    sendBuffer[1] = 0; // 00000000
+    sendBuffer[2] = 1; // 00000001
+
     sendBuffer[3] = 1;
-    sendBuffer[4] = 1;
-    sendBuffer[5] = 1;
-    sendBuffer[6] = 1;
-    sendBuffer[7] = 1;
-    sendBuffer[8] = 1;
-    sendBuffer[9] = 1;
-    sendBuffer[10] = 1;
-    sendBuffer[11] = 1;
-    sendBuffer[12] = 1;
-    sendBuffer[13] = 1;
-    sendBuffer[14] = 1;
-    sendBuffer[15] = 1;
-    sendBuffer[16] = 1;
-    sendBuffer[17] = 1;
-    sendBuffer[18] = 1;
+    sendBuffer[4] = 2;
+    sendBuffer[5] = 3;
+    sendBuffer[6] = 4;
+    sendBuffer[7] = 5;
+    sendBuffer[8] = 6;
+    sendBuffer[9] = 7;
+    sendBuffer[10] = 8;
+    sendBuffer[11] = 9;
+    sendBuffer[12] = 10;
+    sendBuffer[13] = 11;
+    sendBuffer[14] = 12;
+    sendBuffer[15] = 13;
+    sendBuffer[16] = 14;
+    sendBuffer[17] = 15;
+    sendBuffer[18] = 16;
 
     toSendPointer = 19;
     consume(CMD_SLOT, 0);
@@ -111,7 +111,7 @@ void setup() {
   Serial.begin(BAUD_RATE);
   Wire.begin(80);
   Wire.onReceive(measure);
-  // Wire.onRequest(sendit);
+  Wire.onRequest(sendit);
 }
 
 int k = 0;
@@ -137,9 +137,8 @@ void loop() {
     }
   }
   delay(1);
-  
+
   k++;
-  
   if( k > 1000) {
     Serial.print(118, BYTE);
     k = 0;
