@@ -23,21 +23,29 @@ BAUD_RATE = 115200
 sp = SerialPort.new(PORT, BAUD_RATE)
 
 cmd = {
-  119 => "slot_marker_rfid",
-  120 => "select_tag_rfid",
-  121 => "\ninit",
-  122 => "initiate",
-  123 => "completion_rfid",
-  124 => "read",
-  125 => "close\n",
+  100 => "---------------------------> OUT",
+  110 => "-> init",
+  111 => "-> initiate",
+
+  119 => "-> slot_marker_rfid",
+  120 => "-> select_tag_rfid",
+  121 => "-> get_uid_rfid",
+
+  123 => "-> completion_rfid",
+
+  124 => "-> read",
+  125 => "-> close",
+
+  126 => "-> UNKNOWN",
+  127 => "\n"
 }
 #just read forever
 while true do
   v = sp.getc.unpack("C*").first
   if val = cmd[v.to_i]
-    puts val
+    print val
   else
-    print "#{v} "
+    print "#{v.to_s(16).upcase} "
   end
 end
 

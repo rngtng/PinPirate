@@ -29,11 +29,11 @@
   #endif
 
   #ifndef TWI_FREQ
-  #define TWI_FREQ 400000L
+  #define TWI_FREQ 100000L
   #endif
 
   #ifndef TWI_BUFFER_LENGTH
-  #define TWI_BUFFER_LENGTH 98
+  #define TWI_BUFFER_LENGTH 32
   #endif
 
   #define TWI_READY 0

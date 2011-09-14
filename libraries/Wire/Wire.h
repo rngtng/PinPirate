@@ -22,7 +22,7 @@
 
 #include <inttypes.h>
 
-#define BUFFER_LENGTH 98
+#define BUFFER_LENGTH 32
 
 class TwoWire
 {

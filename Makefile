@@ -5,13 +5,13 @@
 #
 ARDUINO_DIR            = /Applications/Arduino.app/Contents/Resources/Java
 TARGET                 = pinpirate
-ARDUINO_LIBS           = Wire, ByteBuffer
-ARDUINO_LIB_PATH       = /Users/tobi/Sites/arduino/pinpirate/libraries
+ARDUINO_LIBS           = Wire Wire/utility ByteBuffer
+ARDUINO_LIB_PATH       = ./libraries
 AVRDUDE_CONF           = /Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/etc/avrdude.conf
 
 
-#MCU                    = atmega328p
-MCU                    = atmega1280
+MCU                    = atmega328p
+#MCU                    = atmega1280
 F_CPU                  = 16000000
 ARDUINO_PORT           = /dev/tty.usb*
 AVRDUDE_ARD_BAUDRATE   = 57600

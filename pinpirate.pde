@@ -1,161 +1,134 @@
 #include <Wire.h>
+#include <ByteBuffer.h>
 
 #define BAUD_RATE 115200
 
 #define READ_BUFFER_SIZE 128
 
-#define CMD_SLOT 119
-#define CMD_SELECT_TAG 120
-#define CMD_INIT 121
-#define CMD_INITATE 122
-#define CMD_COMP 123
-#define CMD_READ 124
-#define CMD_CLOSE 125
+#define CMD_OUT 100 // 0 1
 
+#define CMD_INIT 110 // 0 1
+#define CMD_INITATE 111 // 1 2 6 0
 
-uint8_t sendBuffer[READ_BUFFER_SIZE];
-volatile byte sendPointer = 0;
+#define CMD_SLOT 119 // 3
+#define CMD_SELECT_TAG 120 // 1 2 E
+#define CMD_GET_UID 121 // 1 1 B
+#define CMD_COMP 123 // 1 1 F
 
-volatile byte serialBuffer[READ_BUFFER_SIZE];
-volatile byte serialWPointer = 0;
-volatile byte serialRPointer = 0;
+#define CMD_READ 124 // 1
+#define CMD_CLOSE 125 // 0 0
 
-volatile byte cmdBuffer[READ_BUFFER_SIZE];
-volatile byte cmdPointer = 0;
-int toSendPointer = 0;
+#define CMD_UNKNOWN 126
+#define CMD_NEXT 127
 
-// #########################################################
+ByteBuffer debugBuffer;
 
-void measure(int numBytes) {
-  for(int m = 0; m < numBytes; m++) {
-    cmdBuffer[m] = Wire.receive();
-  }
-  detect(numBytes);
-}
-
-void sendit() {
-  if( sendPointer > 0 ) {
-    Wire.send(sendBuffer, sendPointer);
-  }
-}
+byte in[32]; //where we read cmd intput to
+uint8_t out[32]; //where we read cmd intput to
+int outSize = 0;
+volatile boolean sendEnabled = false;
 
 // #########################################################
 
-void consume(byte cmd, int sendP) {
-  sendPointer = sendP;
-
-  serialBuffer[serialWPointer] = cmd;
-  serialWPointer++;
-  if(serialWPointer >= READ_BUFFER_SIZE) {
-    serialWPointer = 0;
-  }
-}
-
-void detect(int length) {
-  if( length == 4 && cmdBuffer[0] == 1 && cmdBuffer[1] == 2 && cmdBuffer[1] == 14 ) {
-    consume(CMD_SELECT_TAG, 0);
-  }
-  if( length == 4 && cmdBuffer[0] == 1 && cmdBuffer[1] == 2 && cmdBuffer[2] == 6 && cmdBuffer[3] == 0 ) {
-    sendBuffer[0] = 1;
-    sendBuffer[1] = 1;
-    toSendPointer = 2;
-    consume(CMD_INITATE, 0);
-  }
-
-  if( length == 3 && cmdBuffer[0] == 1 && cmdBuffer[1] == 1 && cmdBuffer[2] == 15 ) {
-    consume(CMD_COMP, 0);
-  }
-
-  if( length == 2 && cmdBuffer[0] == 0 && cmdBuffer[1] == 16 ) {
-    consume(CMD_INIT, 0);
-  }
-  if( length == 2 && cmdBuffer[0] == 0 && cmdBuffer[1] == 0 ) {
-    consume(CMD_CLOSE, 0);
-  }
-
-  if( length == 1 && cmdBuffer[0] == 3 ) {
-    sendBuffer[0] = 18;
-    sendBuffer[1] = 0; // 00000000
-    sendBuffer[2] = 1; // 00000001
-
-    sendBuffer[3] = 1;
-    sendBuffer[4] = 2;
-    sendBuffer[5] = 3;
-    sendBuffer[6] = 4;
-    sendBuffer[7] = 5;
-    sendBuffer[8] = 6;
-    sendBuffer[9] = 7;
-    sendBuffer[10] = 8;
-    sendBuffer[11] = 9;
-    sendBuffer[12] = 10;
-    sendBuffer[13] = 11;
-    sendBuffer[14] = 12;
-    sendBuffer[15] = 13;
-    sendBuffer[16] = 14;
-    sendBuffer[17] = 15;
-    sendBuffer[18] = 16;
-
-    toSendPointer = 19;
-    consume(CMD_SLOT, 0);
-  }
-
-  if( length == 1 && cmdBuffer[0] == 1) {
-    consume(CMD_READ, toSendPointer);
-    toSendPointer = 0;
-  }
-}
+void inCallback(int);
+void outCallback();
+byte getCommand(int);
 
 // #########################################################
 
 void setup() {
   Serial.begin(BAUD_RATE);
+
   Wire.begin(80);
-  Wire.onReceive(measure);
-  Wire.onRequest(sendit);
+  Wire.onReceive(inCallback);
+  Wire.onRequest(outCallback);
+
+  debugBuffer.init(READ_BUFFER_SIZE);
 }
 
-int k = 0;
+// #####################
+
+void inCallback(int length) {
+  noInterrupts();
+
+  sendEnabled = false;
+
+  for(int i = 0; i < length; i++) {
+    byte data = Wire.receive();
+    debugBuffer.put(data);
+    in[i] = data;
+  }
+
+  byte cmd = getCommand(length);
+  debugBuffer.put(cmd);
+  debugBuffer.put(CMD_NEXT);
+
+  if( cmd == CMD_READ ) sendEnabled = true;
+  if( cmd == CMD_INITATE || cmd == CMD_SELECT_TAG ) {
+    outSize = 2;
+    byte tosend[] = { 1, 1 };
+    memcpy(out, tosend, outSize);
+  }
+  if( cmd == CMD_SLOT ) {
+    outSize = 19;
+    //byte tosend[] = { 18, 0, 1,  1, 2, 3, 4, 5, 6, 7, 8, 16, 10, 11, 12, 13, 14, 15, 16 };
+    byte tosend[] = { 18, 0, 1,  0, 0, 0, 0, 0, 0, 0, 0, 0x0F, 0, 0, 0, 0, 0, 0, 0 };
+    memcpy(out, tosend, outSize);
+  }
+  if( cmd == CMD_GET_UID ) {
+    outSize = 9;
+    byte tosend[] = { 0, 0x00, 0x00, 0x00, 0xEE, 0xFF, 0xCA, 0x00, 0x00, }; // inject highscore here
+    memcpy(out, tosend, outSize);
+  }
+
+  interrupts();
+}
+
+void outCallback() {
+  //noInterrupts();
+
+  if( sendEnabled && outSize > 0 ) {
+    Wire.send(out, outSize);
+    debugBuffer.put(outSize);
+    debugBuffer.put(CMD_OUT);
+    debugBuffer.put(CMD_NEXT);
+  }
+
+  //interrupts();
+}
+
+// #########################################################
+
+byte getCommand(int length) { //TODO pass 'in' as array pointer here??
+  switch( length ) {
+    case 4:
+      if( in[0] == 1 && in[1] == 2 && in[2] == 0x0E ) return CMD_SELECT_TAG; //forth byte variable
+      if( in[0] == 1 && in[1] == 2 && in[2] == 0x06 && in[3] == 0 ) return CMD_INITATE;
+      break;
+    case 3:
+      if( in[0] == 1 && in[1] == 0x01 && in[2] == 0x0F ) return CMD_COMP;
+      if( in[0] == 1 && in[1] == 0x01 && in[2] == 0x0B ) return CMD_GET_UID;
+      break;
+    case 2:
+      if( in[0] == 0 && in[1] == 0x10 ) return CMD_INIT;
+      if( in[0] == 0 && in[1] == 0x00 ) return CMD_CLOSE;
+      break;
+    case 1:
+      if( in[0] == 3 ) return CMD_SLOT;
+      if( in[0] == 1 ) return CMD_READ;
+      break;
+   }
+  return CMD_UNKNOWN;
+}
+
+// #########################################################
+
 
 void loop() {
-  /* readPointer = cmdPointer;
 
-   if( readPointer > 0) {
-   Serial.print(111, BYTE);
-   Serial.print(readPointer, BYTE);
-   for(int m = 0; m < readPointer; m++) {
-   Serial.print(cmdBuffer[m], BYTE);
-   }
-   cmdPointer = 0;
-   }
-   */
-
-  if(serialWPointer > serialRPointer) {
-    Serial.print(serialBuffer[serialRPointer], BYTE);
-    serialRPointer++;
-    if(serialRPointer >= READ_BUFFER_SIZE) {
-      serialRPointer = 0;
-    }
+  if(debugBuffer.getSize() > 0) {
+    Serial.print(debugBuffer.get(), BYTE);
   }
   delay(1);
 
-  k++;
-  if( k > 1000) {
-    Serial.print(118, BYTE);
-    k = 0;
-  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

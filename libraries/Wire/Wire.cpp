@@ -21,8 +21,9 @@ extern "C" {
   #include <stdlib.h>
   #include <string.h>
   #include <inttypes.h>
-  #include "twi.h"
+  //#include <twi.h>
 }
+#include <twi.h> //this had to moved of extern block to make it compile
 
 #include "Wire.h"
 
