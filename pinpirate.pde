@@ -28,13 +28,12 @@ uint8_t out[32]; //where we read cmd intput to
 int outSize = 0;
 volatile boolean sendEnabled = false;
 
-// #########################################################
 
 void inCallback(int);
 void outCallback();
 byte getCommand(int);
 
-// #########################################################
+// ###################### MAIN
 
 void setup() {
   Serial.begin(BAUD_RATE);
@@ -46,7 +45,14 @@ void setup() {
   debugBuffer.init(READ_BUFFER_SIZE);
 }
 
-// #####################
+void loop() {
+  if(debugBuffer.getSize() > 0) {
+    Serial.print(debugBuffer.get(), BYTE);
+  }
+  delay(1);
+}
+
+// ##################### CALLBACKS
 
 void inCallback(int length) {
   noInterrupts();
@@ -63,15 +69,14 @@ void inCallback(int length) {
   debugBuffer.put(cmd);
   debugBuffer.put(CMD_NEXT);
 
-  if( cmd == CMD_READ ) sendEnabled = true;
-  if( cmd == CMD_INITATE || cmd == CMD_SELECT_TAG ) {
+  if( cmd == CMD_READ ) sendEnabled = true; //aparently a send is expected after a read
+  if( cmd == CMD_INITATE || cmd == CMD_SELECT_TAG ) { //not sure for CMD_SELECT_TAG, but code shows that
     outSize = 2;
     byte tosend[] = { 1, 1 };
     memcpy(out, tosend, outSize);
   }
   if( cmd == CMD_SLOT ) {
     outSize = 19;
-    //byte tosend[] = { 18, 0, 1,  1, 2, 3, 4, 5, 6, 7, 8, 16, 10, 11, 12, 13, 14, 15, 16 };
     byte tosend[] = { 18, 0, 1,  0, 0, 0, 0, 0, 0, 0, 0, 0x0F, 0, 0, 0, 0, 0, 0, 0 };
     memcpy(out, tosend, outSize);
   }
@@ -85,19 +90,16 @@ void inCallback(int length) {
 }
 
 void outCallback() {
-  //noInterrupts();
-
+  //don't disable interrupts here
   if( sendEnabled && outSize > 0 ) {
     Wire.send(out, outSize);
     debugBuffer.put(outSize);
     debugBuffer.put(CMD_OUT);
     debugBuffer.put(CMD_NEXT);
   }
-
-  //interrupts();
 }
 
-// #########################################################
+// ##################### OTHER
 
 byte getCommand(int length) { //TODO pass 'in' as array pointer here??
   switch( length ) {
@@ -121,14 +123,3 @@ byte getCommand(int length) { //TODO pass 'in' as array pointer here??
   return CMD_UNKNOWN;
 }
 
-// #########################################################
-
-
-void loop() {
-
-  if(debugBuffer.getSize() > 0) {
-    Serial.print(debugBuffer.get(), BYTE);
-  }
-  delay(1);
-
-}
