@@ -5,7 +5,7 @@
 #
 ARDUINO_DIR            = /Applications/Arduino.app/Contents/Resources/Java
 TARGET                 = pinpirate
-ARDUINO_LIBS           = Wire Wire/utility ByteBuffer
+ARDUINO_LIBS           = Nabaztag Wire Wire/utility ByteBuffer
 ARDUINO_LIB_PATH       = ./libraries
 AVRDUDE_CONF           = /Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/etc/avrdude.conf
 
