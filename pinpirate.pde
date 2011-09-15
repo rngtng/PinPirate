@@ -18,7 +18,7 @@ void setup() {
 
 void loop() {
 #ifdef DEBUG
-  while( Nabaztag.log.getSize() > 0 ) Serial.print(Nabaztag.log.get(), BYTE);
+  while( logBuffer.getSize() > 0 ) Serial.print(logBuffer.get(), BYTE);
 #endif
 
   delay(3000);

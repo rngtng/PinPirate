@@ -21,40 +21,52 @@
 #define Nabaztag_h
 
 #include "WProgram.h"
+#include <ByteBuffer.h>
 
 #ifdef DEBUG
-#include <ByteBuffer.h>
-#define LOG_SIZE 256
-#define LOG_OUT  100
-#define LOG_NEXT 127
+#define LOG_OUT  100 //TODO this need to be better
+#define linit() logBuffer.init(256)
+#define lprint(data) logBuffer.put(data)
+#define lputs(data) logBuffer.put(data); logBuffer.puts(127)
+ByteBuffer logBuffer;
+
+#else
+#define linit()
+#define lprint(data)
+#define lputs(data)
 #endif
 
 #define CRX14_ADR    80
+#define DUMMY_ADR    23
 
-#define CMD_INIT     120   // 0 1
-#define CMD_INITATE  121   // 1 2 6 0
-#define CMD_SLOT     122   // 3
-#define CMD_SELECT   123   // 1 2 E
-#define CMD_GET_UID  124   // 1 1 B
-#define CMD_COMP     125   // 1 1 F
-#define CMD_READ     126   // 1
-#define CMD_CLOSE    127   // 0 0
+#define CMD_INIT     120 // cmd: 0x00 0x01
+#define CMD_INITATE  121 // cmd: 0x01 0x02 0x06 0x00
+#define CMD_SLOT     122 // cmd: 0x03
+#define CMD_SELECT   123 // cmd: 0x01 0x02 0x0E
+#define CMD_GET_UID  124 // cmd: 0x01 0x01 0x0B
+#define CMD_COMP     125 // cmd: 0x01 0x01 0x0F
+#define CMD_READ     126 // cmd: 0x01
+#define CMD_CLOSE    127 // cmd: 0x00 0x00
 #define CMD_UNKNOWN  128
 
 class NabaztagInjector
 {
   private:
-    static byte in[];
-    static uint8_t out[];
-    static int outSize;
-    static volatile boolean sendEnabled;
+    static volatile boolean inited;       // init comand received, ok to go
+    static volatile boolean sendEnabled;  // only response when true
+    static int rfidPort;                  // pin where RFID chip is conected
+
+    static byte in[];                     // in buffer for reading
+    static uint8_t out[];                 // out buffer for sending
+    static int outSize;                   // size of Buffer to send
+
+    static ByteBuffer sendBuffer;         // actual data to send
 
     byte getCommand(int length);
-  public:
-#ifdef DEBUG
-    static ByteBuffer log;
-#endif
+    void enableRFID();
+    void disableRFID();
 
+  public:
     NabaztagInjector();
     void init(int);
     void send(uint8_t);
