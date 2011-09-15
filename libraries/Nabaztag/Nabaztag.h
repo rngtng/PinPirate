@@ -23,19 +23,6 @@
 #include "WProgram.h"
 #include <ByteBuffer.h>
 
-#ifdef DEBUG
-#define LOG_OUT  100 //TODO this need to be better
-#define linit() logBuffer.init(256)
-#define lprint(data) logBuffer.put(data)
-#define lputs(data) logBuffer.put(data); logBuffer.puts(127)
-ByteBuffer logBuffer;
-
-#else
-#define linit()
-#define lprint(data)
-#define lputs(data)
-#endif
-
 #define CRX14_ADR    80
 #define DUMMY_ADR    23
 
@@ -62,17 +49,18 @@ class NabaztagInjector
 
     static ByteBuffer sendBuffer;         // actual data to send
 
-    byte getCommand(int length);
+    byte getCommand(int length);          // map received data to command byte
     void enableRFID();
     void disableRFID();
-
+    void prepareOutBuffer();              // move from to sendBuffer int out buffer
   public:
     NabaztagInjector();
-    void init(int);
+    void init(int);                       // pin number where RFID chip is connected
     void send(uint8_t);
     void send(uint8_t*, uint8_t);
     void send(int);
     void send(char*);
+
     void processReceive(int length);
     void processRequest();
 };

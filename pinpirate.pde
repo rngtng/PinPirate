@@ -1,4 +1,4 @@
-//#define DEBUG
+#include <log.h>
 
 #include <Nabaztag.h>
 
@@ -6,22 +6,25 @@
 #define BAUD_RATE 115200
 #endif
 
-// ###################### MAIN
+ByteBuffer logBuffer;
+
+int k = 0;
 
 void setup() {
-#ifdef DEBUG
-  Serial.begin(BAUD_RATE);
-#endif
-
+  linit();
   Nabaztag.init(12);
 }
 
 void loop() {
-#ifdef DEBUG
-  while( logBuffer.getSize() > 0 ) Serial.print(logBuffer.get(), BYTE);
-#endif
+  lsend();
+  delay(1000);
 
-  delay(3000);
-  Nabaztag.send(12);
+  if((k % 4) == 0) {
+
+    byte a[] = { 0, k, 0, 0xEE, 0xFF, 0xCA, 0, 0};
+    Nabaztag.send(a, 8);
+
+  }
+  k++;
 }
 

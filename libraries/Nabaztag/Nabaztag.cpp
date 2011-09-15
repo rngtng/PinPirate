@@ -20,6 +20,7 @@
 #include <Nabaztag.h>
 #include <Wire.h>
 #include <twi.h>
+#include <log.h>
 
 void receiveCallback(int length)
 {
@@ -61,17 +62,14 @@ void NabaztagInjector::init(int _rfidPort)
   Wire.onRequest(requestCallback);
 
   enableRFID();
-
-  linit();
 }
 
 
 void NabaztagInjector::send(uint8_t* data, uint8_t length)
 {
-  for(int i = 0; i < 8; length++) {
+  for(int i = 0; i < length; i++) {
     sendBuffer.put(data[i]);
   }
-
   disableRFID(); //aka start injection :-)
 }
 
@@ -99,8 +97,6 @@ void NabaztagInjector::processReceive(int length) {
   for(int i = 0; i < length; i++) {
     byte data = Wire.receive();
     in[i] = data;
-
-    lprint(data);
   }
 
   byte cmd = getCommand(length);
@@ -109,6 +105,7 @@ void NabaztagInjector::processReceive(int length) {
   if( cmd == CMD_CLOSE ) inited = false;
 
   if( inited ) {
+    lputs(cmd);
     if( cmd == CMD_READ ) sendEnabled = true; //aparently a send is always expected after a read
     if( cmd == CMD_INITATE || cmd == CMD_SELECT ) { //not sure for CMD_SELECT, but code shows that it need response
       byte outNew[] = { 1, 1 };
@@ -122,22 +119,9 @@ void NabaztagInjector::processReceive(int length) {
     }
     if( cmd == CMD_GET_UID ) {
       outSize = 9;
-
-      //move from to sendBuffer int out buffer
-      out[0] = 0x01; //Dummy first Byte
-      for( int i = 0; i < 8; i++ ) {
-        if( sendBuffer.getSize() > 0 ) {
-          out[i] = sendBuffer.get();
-        }
-        else {
-          out[i] = 0x00; //fill up with zeros
-        }
-      }
-
+      prepareOutBuffer();
     }
   }
-
-  lputs(cmd);
 
   interrupts();
 }
@@ -146,7 +130,6 @@ void NabaztagInjector::processRequest() {
   if( sendEnabled && outSize > 0 ) {
     Wire.send(out, outSize);
 
-    lprint(outSize);
     lputs(LOG_OUT);
 
     if( sendBuffer.getSize() < 1 ) { //all data is send
@@ -161,13 +144,11 @@ void NabaztagInjector::processRequest() {
 
 void NabaztagInjector::enableRFID() {
   twi_setAddress(DUMMY_ADR);
-  //TODO add some delay here??
   digitalWrite(rfidPort, HIGH);
 }
 
 void NabaztagInjector::disableRFID() {
   twi_setAddress(CRX14_ADR);
-  //TODO add some delay here??
   digitalWrite(rfidPort, LOW);
 }
 
@@ -193,6 +174,19 @@ byte NabaztagInjector::getCommand(int length) {
   return CMD_UNKNOWN;
 }
 
+void NabaztagInjector::prepareOutBuffer() {
+  out[0] = 0x00; //Dummy first Byte
+  for( int i = 0; i < 8; i++ ) {
+    if( sendBuffer.getSize() > 0 ) {
+      out[i+1] = sendBuffer.get();
+    }
+    else {
+      out[i+1] = 0x00; //fill up with zeros
+    }
+
+    lprint(out[i+1]);
+  }
+}
 // Preinstantiate Objects //////////////////////////////////////////////////////
 
 NabaztagInjector Nabaztag = NabaztagInjector();
