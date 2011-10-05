@@ -1,0 +1,6 @@
+[submodule "examples/pirate/libraries/Nabaztag"]
+	path = examples/pirate/libraries/Nabaztag
+	url = git@github.com:rngtng/NabaztagInjector.git
+[submodule "examples/Arduino.mk"]
+	path = examples/Arduino.mk
+	url = git@github.com:rngtng/Arduino.mk.git
