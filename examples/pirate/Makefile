@@ -4,7 +4,7 @@
 #
 #
 TARGET                 = pirate
-ARDUINO_LIBS           = ByteBuffer TimerOne PinPirate
+ARDUINO_LIBS           = NabaztagInjector
 ARDUINO_DIR            = /Applications/Arduino.app/Contents/Resources/Java
 AVRDUDE_CONF           = /Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/etc/avrdude.conf
 ARDUINO_LIB_PATH       = ./libraries
