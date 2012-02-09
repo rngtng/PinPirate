@@ -1,12 +1,12 @@
 
 /*
- *
- *
  * LOW to trigger the interrupt whenever the pin is low,
  * CHANGE to trigger the interrupt whenever the pin changes value
  * RISING to trigger when the pin goes from low to high,
  * FALLING for when the pin goes from high to low.
  */
+
+#include <Nabaztag.h>
 
 #define INIT_DATA1 DDRD = DDRD & ~0xF8 //b0000 0111 - init pins as INPUT
 #define INIT_DATA2 DDRC = DDRC & ~0x0F //b1111 0000
@@ -41,7 +41,9 @@ void read_data() {
 void setup() {
   INIT_DATA1;
   INIT_DATA2;
-  Serial.begin(115200);
+  // Serial.begin(115200);
+  Nabaztag.begin(9); // RFID Reader connected atPIN 9, leave empty for standalone
+
   buffer[bufferWrite] = CMD_STOP;
   attachInterrupt(IR_CLK, read_data, RISING);
   attachInterrupt(IR_STATUS, read_data, RISING);
@@ -52,14 +54,7 @@ void loop() {
     byte data; //ANSI C
     bufferRead = (bufferRead + 1) % BUFFER_SIZE;
     data = buffer[bufferRead];
-
-    if( data != CMD_STOP )  {
-      Serial.print(data, HEX);
-      Serial.print(",");
-    }
-    else {
-      Serial.println("");
-    }
+    Nabaztag.inject(data);
   }
 
 }
