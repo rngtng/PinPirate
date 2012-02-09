@@ -5,7 +5,7 @@
  * LOW to trigger the interrupt whenever the pin is low,
  * CHANGE to trigger the interrupt whenever the pin changes value
  * RISING to trigger when the pin goes from low to high,
- * FALLING for when the pin goes from high to low. 
+ * FALLING for when the pin goes from high to low.
  */
 
 #define INIT_DATA1 DDRD = DDRD & ~0xF8 //b0000 0111 - init pins as INPUT
@@ -24,17 +24,17 @@ volatile byte buffer[BUFFER_SIZE];
 volatile int bufferRead = 0; //points to last read position
 volatile int bufferWrite = 0; //points to last written position
 
-void read_data() {  
+void read_data() {
   byte data_and_stat = READ_CHAN1;
-  
+
   if(data_and_stat & 0x08) { //check if stat is set
     bufferWrite = (bufferWrite + 1) % BUFFER_SIZE;
     buffer[bufferWrite] = READ_DATA2 | (data_and_stat >> 4);
-    
+
   } else if(buffer[bufferWrite] != CMD_STOP) {
     bufferWrite = (bufferWrite + 1) % BUFFER_SIZE;
     buffer[bufferWrite] = CMD_STOP;
-    
+
   }
 }
 
@@ -61,6 +61,6 @@ void loop() {
       Serial.println("");
     }
   }
-  
+
 }
 

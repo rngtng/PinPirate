@@ -33,28 +33,13 @@
 #else
 //PIND: 2-7, PINB: 8-13 - non of them are 8bit, so we have to read both and merge
 #define READ_CHAN1  (PIND >> 2) & 0x0F //pins 2 - 5
-#define READ_CHAN2 PINB & 0x0F //pins 8 - 11
-#define READ_CLK (PIND >> 4) & 0x01
+#define READ_CHAN2  PINB & 0x0F //pins 8 - 11
+#define READ_DATA   READ_CHAN1 + (READ_CHAN2 << 4)
+#define READ_CLK    (PIND >> 4) & 0x01
 #define READ_STATUS (PIND >> 4) & 0x01
 #endif
 
 #include "WProgram.h"
-// #include <ByteBuffer.h>
-//
-// #define SEND_BUFFER_SIZE 128
-//
-// #define CRX14_ADR    80
-// #define DUMMY_ADR    23
-//
-// #define CMD_INIT     120 // cmd: 0x00 0x01
-// #define CMD_INITATE  121 // cmd: 0x01 0x02 0x06 0x00
-// #define CMD_SLOT     122 // cmd: 0x03
-// #define CMD_SELECT   123 // cmd: 0x01 0x02 0x0E
-// #define CMD_GET_UID  124 // cmd: 0x01 0x01 0x0B
-// #define CMD_COMP     125 // cmd: 0x01 0x01 0x0F
-// #define CMD_READ     126 // cmd: 0x01
-// #define CMD_CLOSE    127 // cmd: 0x00 0x00
-// #define CMD_UNKNOWN  128
 
 class PP
 {

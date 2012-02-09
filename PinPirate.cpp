@@ -18,34 +18,42 @@
 */
 
 #include <PinPirate.h>
-
 #include <TimerOne.h>
 
 
 #define READ_BUFFER_SIZE 128
 
-volatile byte readBuffer[READ_BUFFER_SIZE];
-volatile byte writePointer = 0;
-byte readPointer = 0;
-volatile byte commandBuffer[READ_BUFFER_SIZE];
-int k;
-volatile int l;
+volatile byte buffer[READ_BUFFER_SIZE];
+volatile int cnt;
 
 volatile int length = 0;
 volatile byte prevClock = 0;
-volatile byte clock = 0;
 
 void measure() {
-  clock = READ_CLK;
+  byte clock = READ_CLK;
+  // status = READ_STATUS;
 
   if(prevClock == 0 && clock == 1) { //raising clock
-    READ_CHAN1 READ_CHAN2
-    //if length = 0, length = READ_CHAN1 + (READ_CHAN2 << 4)
-    else
-     buffer.push()
-    
+    byte input = READ_DATA;
+    if(length == 0) {
+      length = input;
+      cnt = 0;
+    } else {
+      buffer[cnt] = input;
+      cnt++;
+    }
+  }
+
+  // TODO use status here?
+  if( cnt == length ) {
+    length = 0;
+    processData();
   }
   prevClock = clock;
+}
+
+void processData() {
+
 }
 
 void init() {
